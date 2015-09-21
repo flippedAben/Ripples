@@ -32,8 +32,8 @@ public class GameScreen extends Activity {
         @Override
         public void run() {
             for(int i = 0; i < circleCenters.size(); i++)
-                circleCenters.get(i).addRadius(2,1000);
-            handler.postDelayed(runnable, seconds * 100);
+                circleCenters.get(i).addRadius(3,700);
+            handler.postDelayed(runnable, seconds * 50);
         }
     };
 
@@ -46,7 +46,9 @@ public class GameScreen extends Activity {
         width = size.x;
         height = size.y;
         setContentView(new MyView(this));
-        handler.postDelayed(runnable, seconds * 500);
+        Thread mythread = new Thread(runnable);
+        mythread.start();
+        //handler.postDelayed(runnable, seconds * 500);
     }
 
     class MyView extends View {
@@ -75,13 +77,31 @@ public class GameScreen extends Activity {
             paint.setStyle(Paint.Style.STROKE);
         }
 
+        private void initCircle() {
+            paint.setColor(Color.BLUE);
+            paint.setStrokeWidth(3);
+            paint.setStyle(Paint.Style.STROKE);
+        }
+
+        private void initDot() {
+            paint.setColor(Color.RED);
+            paint.setStrokeWidth(1);
+            paint.setStyle(Paint.Style.FILL);
+        }
+
         @Override
         protected void onDraw(Canvas canvas) {
             super.onDraw(canvas);
 
+            initCircle();
             paint.setStyle(Paint.Style.STROKE);
             for(int i = 0; i < circleCenters.size(); i++) {
                 canvas.drawCircle(circleCenters.get(i).getCenterX(), circleCenters.get(i).getCenterY(), circleCenters.get(i).getRadius(), paint);
+            }
+
+            initDot();
+            for(int i = 0; i < circleCenters.size(); i++) {
+                canvas.drawCircle(randDots.get(i).getCenterX(), randDots.get(i).getCenterY(), randDots.get(i).getRadius(), paint);
             }
 
             invalidate();
@@ -90,12 +110,7 @@ public class GameScreen extends Activity {
         @Override
         public boolean onTouchEvent(MotionEvent event) {
             if(event.getAction() == MotionEvent.ACTION_DOWN) {
-                paint.setStyle(Paint.Style.FILL);
-                paint.setColor(Color.RED);
                 randDots.add(new Circle(rand.nextInt(width), rand.nextInt(height), randDotRadius));
-
-                paint.setStyle(Paint.Style.STROKE);
-                paint.setColor(Color.BLUE);
                 circleCenters.add(new Circle(event.getX(),event.getY(),0));
             }
             return true;
