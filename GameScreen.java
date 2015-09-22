@@ -19,8 +19,8 @@ import java.util.Random;
 
 public class GameScreen extends Activity {
 
-    private long randDotRadius = 10;
-    private long seconds = 5;
+    private long randDotRadius = 50;
+    private long seconds = 2;
     private int width;
     private int height;
 
@@ -76,7 +76,7 @@ public class GameScreen extends Activity {
                 rad = circles.get(i).getRadius();
                 xC = circles.get(i).getCenterX() - dots.get(j).getCenterX();
                 yC = circles.get(i).getCenterY() - dots.get(j).getCenterY();
-                if(rad*rad <= xC*xC + yC*yC + 2*randDotRadius*randDotRadius && rad*rad >= xC*xC + yC*yC - 2*randDotRadius*randDotRadius) {
+                if(!dots.get(j).getTapped() && rad*rad <= xC*xC + yC*yC + 2*randDotRadius*randDotRadius && rad*rad >= xC*xC + yC*yC - 2*randDotRadius*randDotRadius) {
                     return true;
                 }
             }
@@ -108,15 +108,14 @@ public class GameScreen extends Activity {
         @Override
         protected void onDraw(Canvas canvas) {
             super.onDraw(canvas);
-
-            for(int i = 0; i < circleCenters.size(); i++) {
-                canvas.drawCircle(circleCenters.get(i).getCenterX(), circleCenters.get(i).getCenterY(), circleCenters.get(i).getRadius(), paintCircle);
-            }
-
             for(int i = 0; i < circleCenters.size(); i++) {
                 canvas.drawCircle(randDots.get(i).getCenterX(), randDots.get(i).getCenterY(), randDots.get(i).getRadius(), paintDot);
                 if(randDots.get(i).getTapped() == true)
                     canvas.drawCircle(randDots.get(i).getCenterX(), randDots.get(i).getCenterY(), randDots.get(i).getRadius(), paintTappedDot);
+            }
+
+            for(int i = 0; i < circleCenters.size(); i++) {
+                canvas.drawCircle(circleCenters.get(i).getCenterX(), circleCenters.get(i).getCenterY(), circleCenters.get(i).getRadius(), paintCircle);
             }
 
             invalidate();
