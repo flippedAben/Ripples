@@ -19,23 +19,25 @@ import java.util.Random;
 
 public class GameScreen extends Activity {
 
-    private ArrayList<Circle> circleCenters = new ArrayList<>();
-    private ArrayList<Circle> randDots = new ArrayList<>();
-
-    Random rand = new Random();
-    private final static long seconds = 1;
-    private final static long randDotRadius = 10;
+    private long randDotRadius = 10;
+    private long seconds = 1;
     private int width;
     private int height;
+
+    private ArrayList<Circle> circleCenters = new ArrayList<>();
+    private ArrayList<Dot> randDots = new ArrayList<>();
+
     private Handler handler = new Handler();
     private Runnable runnable = new Runnable() {
         @Override
         public void run() {
             for(int i = 0; i < circleCenters.size(); i++)
                 circleCenters.get(i).addRadius(3,700);
-            handler.postDelayed(runnable, seconds * 50);
+            handler.postDelayed(runnable, seconds * 10);
         }
     };
+
+    Random rand = new Random();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -46,14 +48,15 @@ public class GameScreen extends Activity {
         width = size.x;
         height = size.y;
         setContentView(new MyView(this));
-        Thread mythread = new Thread(runnable);
-        mythread.start();
-        //handler.postDelayed(runnable, seconds * 500);
+        Thread myThread = new Thread(runnable);
+        myThread.start();
     }
 
     class MyView extends View {
 
-        Paint paint;
+        Paint paintCircle;
+        Paint paintDot;
+        Paint paintTappedDot;
 
         public MyView(Context context) {
             super(context);
@@ -70,38 +73,18 @@ public class GameScreen extends Activity {
             init();
         }
 
-        private void init() {
-            paint = new Paint();
-            paint.setColor(Color.BLUE);
-            paint.setStrokeWidth(3);
-            paint.setStyle(Paint.Style.STROKE);
-        }
-
-        private void initCircle() {
-            paint.setColor(Color.BLUE);
-            paint.setStrokeWidth(3);
-            paint.setStyle(Paint.Style.STROKE);
-        }
-
-        private void initDot() {
-            paint.setColor(Color.RED);
-            paint.setStrokeWidth(1);
-            paint.setStyle(Paint.Style.FILL);
-        }
-
         @Override
         protected void onDraw(Canvas canvas) {
             super.onDraw(canvas);
 
-            initCircle();
-            paint.setStyle(Paint.Style.STROKE);
             for(int i = 0; i < circleCenters.size(); i++) {
-                canvas.drawCircle(circleCenters.get(i).getCenterX(), circleCenters.get(i).getCenterY(), circleCenters.get(i).getRadius(), paint);
+                canvas.drawCircle(circleCenters.get(i).getCenterX(), circleCenters.get(i).getCenterY(), circleCenters.get(i).getRadius(), paintCircle);
             }
 
-            initDot();
             for(int i = 0; i < circleCenters.size(); i++) {
-                canvas.drawCircle(randDots.get(i).getCenterX(), randDots.get(i).getCenterY(), randDots.get(i).getRadius(), paint);
+                canvas.drawCircle(randDots.get(i).getCenterX(), randDots.get(i).getCenterY(), randDots.get(i).getRadius(), paintDot);
+                if(randDots.get(i).getTapped() == true)
+                    canvas.drawCircle(randDots.get(i).getCenterX(), randDots.get(i).getCenterY(), randDots.get(i).getRadius(), paintTappedDot);
             }
 
             invalidate();
@@ -110,10 +93,35 @@ public class GameScreen extends Activity {
         @Override
         public boolean onTouchEvent(MotionEvent event) {
             if(event.getAction() == MotionEvent.ACTION_DOWN) {
-                randDots.add(new Circle(rand.nextInt(width), rand.nextInt(height), randDotRadius));
+                for(int i = 0; i < randDots.size(); i++){
+                    float xdiff = randDots.get(i).getCenterX() - event.getX();
+                    float ydiff = randDots.get(i).getCenterY() - event.getY();
+                    if(xdiff*xdiff + ydiff*ydiff <= randDotRadius * randDotRadius){
+                        randDots.get(i).setTapped(true);
+                    }
+                }
+                randDots.add(new Dot(rand.nextInt(width), rand.nextInt(height), randDotRadius));
                 circleCenters.add(new Circle(event.getX(),event.getY(),0));
             }
             return true;
+        }
+
+        private void init() {
+            paintCircle = new Paint();
+            paintDot = new Paint();
+            paintTappedDot = new Paint();
+
+            paintCircle.setColor(Color.BLUE);
+            paintCircle.setStrokeWidth(3);
+            paintCircle.setStyle(Paint.Style.STROKE);
+
+            paintDot.setColor(Color.RED);
+            paintDot.setStrokeWidth(0);
+            paintDot.setStyle(Paint.Style.FILL);
+
+            paintTappedDot.setColor(Color.GREEN);
+            paintTappedDot.setStrokeWidth(0);
+            paintTappedDot.setStyle(Paint.Style.FILL);
         }
     }
 }
