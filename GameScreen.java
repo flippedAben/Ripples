@@ -20,20 +20,35 @@ import java.util.Random;
 public class GameScreen extends Activity {
 
     private long randDotRadius = 10;
-    private long seconds = 1;
+    private long seconds = 5;
     private int width;
     private int height;
 
     private ArrayList<Circle> circleCenters = new ArrayList<>();
     private ArrayList<Dot> randDots = new ArrayList<>();
 
+
     private Handler handler = new Handler();
-    private Runnable runnable = new Runnable() {
+    private Runnable incRad = new Runnable() {
         @Override
         public void run() {
-            for(int i = 0; i < circleCenters.size(); i++)
-                circleCenters.get(i).addRadius(3,700);
-            handler.postDelayed(runnable, seconds * 10);
+            for(int i = 0; i < circleCenters.size(); i++) {
+                circleCenters.get(i).addRadius(1, 700);
+            }
+            handler.postDelayed(incRad, seconds * 10);
+        }
+    };
+
+    private Runnable checkLoss = new Runnable() {
+        @Override
+        public void run() {
+            boolean go = true;
+            while(go == true){
+                if(hasLost(circleCenters,randDots)) {
+                    go = false;
+                    handler.removeCallbacks(incRad);
+                }
+            }
         }
     };
 
@@ -48,8 +63,25 @@ public class GameScreen extends Activity {
         width = size.x;
         height = size.y;
         setContentView(new MyView(this));
-        Thread myThread = new Thread(runnable);
-        myThread.start();
+        handler.postDelayed(incRad, seconds * 10);
+        Thread start = new Thread(checkLoss);
+        start.start();
+    }
+
+    private boolean hasLost(ArrayList<Circle> circles, ArrayList<Dot> dots) {
+        // Current code is in O(n^2), but can we do better?
+        float rad, xC, yC;
+        for(int i = 0; i < circles.size(); i++) {
+            for(int j = 0; j < dots.size(); j++) {
+                rad = circles.get(i).getRadius();
+                xC = circles.get(i).getCenterX() - dots.get(j).getCenterX();
+                yC = circles.get(i).getCenterY() - dots.get(j).getCenterY();
+                if(rad*rad <= xC*xC + yC*yC + 2*randDotRadius*randDotRadius && rad*rad >= xC*xC + yC*yC - 2*randDotRadius*randDotRadius) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     class MyView extends View {
@@ -101,7 +133,7 @@ public class GameScreen extends Activity {
                     }
                 }
                 randDots.add(new Dot(rand.nextInt(width), rand.nextInt(height), randDotRadius));
-                circleCenters.add(new Circle(event.getX(),event.getY(),0));
+                circleCenters.add(new Circle(event.getX(),event.getY(),2*randDotRadius));
             }
             return true;
         }
