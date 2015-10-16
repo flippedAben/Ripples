@@ -1,13 +1,17 @@
 package com.example.ben.ripples;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Point;
 import android.os.Handler;
 import android.os.Bundle;
+import android.os.Looper;
+import android.os.Message;
 import android.util.AttributeSet;
 
 import android.view.Display;
@@ -19,17 +23,18 @@ import java.util.Random;
 
 public class GameScreen extends Activity {
 
-    private long randDotRadius = 50;
-    private long seconds = 2;
+    private int randDotRadius = 50;
+    private int seconds = 2;
     private int width;
     private int height;
+    private boolean playing;
+    private int drawBlank;
 
     private ArrayList<Circle> circleCenters = new ArrayList<>();
     private ArrayList<Dot> randDots = new ArrayList<>();
 
-
     private Handler handler = new Handler();
-    private Runnable incRad = new Runnable() {
+    Runnable incRad = new Runnable() {
         @Override
         public void run() {
             for(int i = 0; i < circleCenters.size(); i++) {
@@ -39,20 +44,23 @@ public class GameScreen extends Activity {
         }
     };
 
-    private Runnable checkLoss = new Runnable() {
+    Runnable checkLoss = new Runnable() {
         @Override
         public void run() {
-            boolean go = true;
-            while(go == true){
+            while(playing){
                 if(hasLost(circleCenters,randDots)) {
-                    go = false;
-                    handler.removeCallbacks(incRad);
+                    circleCenters.clear();
+                    randDots.clear();
+                    drawBlank = 1;
                 }
             }
         }
     };
 
     Random rand = new Random();
+
+    AlertDialog.Builder builder;
+    AlertDialog askReplay;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -62,10 +70,32 @@ public class GameScreen extends Activity {
         display.getSize(size);
         width = size.x;
         height = size.y;
-        setContentView(new MyView(this));
-        handler.postDelayed(incRad, seconds * 10);
+        playing = true;
+        drawBlank = 0;
+
+        setContentView(new GameView(this));
+
+        builder = new AlertDialog.Builder(GameScreen.this)
+                .setTitle("Game Over")
+                .setMessage("Replay?")
+                .setCancelable(false)
+                .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        circleCenters.clear();
+                        randDots.clear();
+                        drawBlank = 1;
+                        dialog.cancel();
+                    }
+                })
+                .setNegativeButton("No", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        GameScreen.this.finish();
+                    }
+                });
+
         Thread start = new Thread(checkLoss);
         start.start();
+        handler.postDelayed(incRad, seconds * 10);
     }
 
     private boolean hasLost(ArrayList<Circle> circles, ArrayList<Dot> dots) {
@@ -84,40 +114,44 @@ public class GameScreen extends Activity {
         return false;
     }
 
-    class MyView extends View {
+    class GameView extends View {
 
+        Paint bg;
         Paint paintCircle;
         Paint paintDot;
         Paint paintTappedDot;
 
-        public MyView(Context context) {
+        public GameView(Context context) {
             super(context);
             init();
         }
 
-        public MyView(Context context, AttributeSet attrs) {
+        public GameView(Context context, AttributeSet attrs) {
             super(context, attrs);
             init();
         }
 
-        public MyView(Context context, AttributeSet attrs, int defStyle) {
+        public GameView(Context context, AttributeSet attrs, int defStyle) {
             super(context, attrs, defStyle);
             init();
         }
 
         @Override
         protected void onDraw(Canvas canvas) {
+            if(drawBlank == 1) {
+                canvas.drawRect((float)0, (float)0, (float)width, (float)height,bg);
+                drawBlank = 0;
+            }
             super.onDraw(canvas);
             for(int i = 0; i < circleCenters.size(); i++) {
                 canvas.drawCircle(randDots.get(i).getCenterX(), randDots.get(i).getCenterY(), randDots.get(i).getRadius(), paintDot);
-                if(randDots.get(i).getTapped() == true)
+                if(randDots.get(i).getTapped())
                     canvas.drawCircle(randDots.get(i).getCenterX(), randDots.get(i).getCenterY(), randDots.get(i).getRadius(), paintTappedDot);
             }
 
             for(int i = 0; i < circleCenters.size(); i++) {
                 canvas.drawCircle(circleCenters.get(i).getCenterX(), circleCenters.get(i).getCenterY(), circleCenters.get(i).getRadius(), paintCircle);
             }
-
             invalidate();
         }
 
@@ -131,16 +165,19 @@ public class GameScreen extends Activity {
                         randDots.get(i).setTapped(true);
                     }
                 }
-                randDots.add(new Dot(rand.nextInt(width), rand.nextInt(height), randDotRadius));
+                randDots.add(new Dot(randDotRadius+rand.nextInt(width-2*randDotRadius), randDotRadius+rand.nextInt(height-4*randDotRadius), randDotRadius));
                 circleCenters.add(new Circle(event.getX(),event.getY(),2*randDotRadius));
             }
             return true;
         }
 
         private void init() {
+            bg = new Paint();
             paintCircle = new Paint();
             paintDot = new Paint();
             paintTappedDot = new Paint();
+
+            bg.setColor(Color.WHITE);
 
             paintCircle.setColor(Color.BLUE);
             paintCircle.setStrokeWidth(3);
