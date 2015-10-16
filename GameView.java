@@ -23,8 +23,9 @@ public class GameView extends SurfaceView implements Runnable {
 
     private Paint p = new Paint();
 
-    private final static int chgRadius = 2;
-    private final static int dotRadius = 20;
+    // MYSTERY BUG: if chgRadius is the commented code, array out of bounds exception QQ
+    private final static int chgRadius = GameActivity.getHeight()/1000; //(GameActivity.getHeight() > GameActivity.getWidth()) ? GameActivity.getHeight()/1000 : GameActivity.getWidth()/1000;
+    private final int dotRadius = (GameActivity.getHeight() > GameActivity.getWidth()) ? GameActivity.getHeight()/42 : GameActivity.getWidth()/42;
     private Random rand = new Random();
 
     private final static int MAX_FPS = 60;
@@ -157,20 +158,21 @@ public class GameView extends SurfaceView implements Runnable {
         if(whiteOut)
             canvas.drawColor(Color.WHITE);
         p.setStyle(Paint.Style.FILL);
-        for(Dot dot : dots) {
-            if(dot.tapped) {
+        for(int j = dots.size()-1; j >= 0; j--) {
+            if(dots.get(j).tapped) {
                 p.setColor(Color.GREEN);
-                canvas.drawCircle(dot.centerX,dot.centerY,dotRadius,p);
+                canvas.drawCircle(dots.get(j).centerX,dots.get(j).centerY,dotRadius,p);
             } else {
                 p.setColor(Color.RED);
-                canvas.drawCircle(dot.centerX,dot.centerY,dotRadius,p);
+                canvas.drawCircle(dots.get(j).centerX,dots.get(j).centerY,dotRadius,p);
             }
         }
         p.setStyle(Paint.Style.STROKE);
         p.setStrokeWidth(2);
-        for(Circle ripple : ripples) {
-            p.setColor(Color.BLUE);
-            canvas.drawCircle(ripple.centerX,ripple.centerY,ripple.radius,p);
+        p.setColor(Color.BLUE);
+        for(int i = 0; i < ripples.size(); i++) {
+            if(i < ripples.size())
+                canvas.drawCircle(ripples.get(i).centerX,ripples.get(i).centerY,ripples.get(i).radius,p);
         }
     }
 
