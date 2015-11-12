@@ -6,6 +6,8 @@ import android.content.DialogInterface;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.os.Handler;
+import android.os.Looper;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
@@ -15,6 +17,7 @@ import java.util.Random;
 
 public class GameView extends SurfaceView implements Runnable {
 
+    private final Context gameActivity;
     private int screenWidth;
     private int screenHeight;
 
@@ -36,12 +39,14 @@ public class GameView extends SurfaceView implements Runnable {
 
     private SurfaceHolder holder;
 
-    AlertDialog.Builder builder;
     private boolean whiteOut = true;
     private boolean fingerOK = true;
+	private int score = 0;
+    private int hscore = 0;
 
     public GameView(Context context) {
         super(context);
+        gameActivity = context;
         holder = getHolder();
         holder.addCallback(new SurfaceHolder.Callback() {
             @Override
@@ -58,18 +63,6 @@ public class GameView extends SurfaceView implements Runnable {
             public void surfaceDestroyed(SurfaceHolder holder) {
             }
         });
-
-        builder = new AlertDialog.Builder(context);
-        builder.setMessage("Game Over");
-        builder.setCancelable(false);
-        builder.setPositiveButton("Replay",
-                new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int id) {
-                        whiteOut = true;
-                        fingerOK = true;
-                        dialog.cancel();
-                    }
-                });
     }
 
     @Override
@@ -80,6 +73,7 @@ public class GameView extends SurfaceView implements Runnable {
                 float ydiff = dots.get(dots.size() - 1).centerY - event.getY();
                 if (xdiff * xdiff + ydiff * ydiff <= dotRadius * dotRadius) {
                     dots.get(dots.size() - 1).tapped = true;
+					score++;
                     dots.add(new Dot(dotRadius + rand.nextInt(screenWidth - 2 * dotRadius), dotRadius + rand.nextInt(screenHeight - 4 * dotRadius), dotRadius));
                 }
             }
@@ -104,11 +98,27 @@ public class GameView extends SurfaceView implements Runnable {
                 fingerOK = false;
                 dots.clear();
                 ripples.clear();
+                if(score > hscore)
+                    hscore = score;
                 GameActivity.runOnUI(new Runnable() {
                     @Override
                     public void run() {
+                        AlertDialog.Builder builder;
+                        builder = new AlertDialog.Builder(gameActivity);
+                        builder.setTitle("Game Over");
+                        builder.setMessage("Your high score is " + hscore + "." + "\n" + "Your score is " + score + ".");
+                        builder.setCancelable(false);
+                        builder.setPositiveButton("Replay",
+                                new DialogInterface.OnClickListener() {
+                                    public void onClick(DialogInterface dialog, int id) {
+                                        whiteOut = true;
+                                        fingerOK = true;
+                                        dialog.cancel();
+                                    }
+                                });
                         AlertDialog alert = builder.create();
                         alert.show();
+                        score = 0;
                     }
                 });
                 holder.unlockCanvasAndPost(canvas);

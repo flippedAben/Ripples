@@ -5,6 +5,7 @@ import android.graphics.Point;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.Message;
 import android.view.Display;
 
 public class GameActivity extends Activity {
@@ -14,13 +15,8 @@ public class GameActivity extends Activity {
 
     protected GameView gameView;
 
-    public static Handler UIHandler;
-    static {
-        UIHandler = new Handler(Looper.getMainLooper());
-    }
-    public static void runOnUI(Runnable runnable) {
-        UIHandler.post(runnable);
-    }
+    public static Handler UIHandler = new Handler(Looper.getMainLooper());
+    public static void runOnUI(Runnable runnable) { UIHandler.post(runnable); }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
